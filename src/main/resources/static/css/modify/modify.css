@@ -1,0 +1,5 @@
+@charset "UTF-8";
+.old-file:hover {
+	cursor:pointer;
+	text-decoration: underline;
+}

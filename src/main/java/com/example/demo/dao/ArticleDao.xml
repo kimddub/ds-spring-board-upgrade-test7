@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!-- XML mapper dtd 등록 -->
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+  
+<mapper namespace="com.example.demo.dao.ArticleDao">
+
+	<select id="getList" resultMap="Article">
+		SELECT a1.*, a2.onlyRegDate
+		FROM article AS a1
+		LEFT JOIN (
+			SELECT id, DATE_FORMAT(regDate,"%Y-%m-%d") AS 'onlyRegDate'
+			FROM article
+		) AS a2
+		ON a1.id = a2.id
+		WHERE a1.delState != 1
+		<if test="searchMode != null and searchMode == 'true'">
+			<if test="searchType == 'title'"> AND a1.`title` LIKE CONCAT('%', #{searchKey}, '%') </if>
+			<if test="searchType == 'body'"> AND a1.`body` LIKE CONCAT('%', #{searchKey}, '%') </if>
+			<if test="searchType == 'writer'"> AND a1.`writer` LIKE CONCAT('%', #{searchKey}, '%') </if>
+		</if>
+		ORDER BY a1.`regDate` DESC, a1.id DESC
+		LIMIT #{prevPageArticles}, #{perPageArticles}
+	</select>
+	
+	<select id="totalCount" resultType="Integer">
+		SELECT COUNT(*)
+		FROM article
+		WHERE delState != 1
+		<if test="searchMode != null and searchMode == 'true'">
+			<if test="searchType == 'title'"> AND `title` LIKE CONCAT('%', #{searchKey}, '%') </if>
+		</if>
+		ORDER BY `regDate` DESC, id DESC;
+	</select>
+	
+	<select id="getOne" parameterType="long" resultMap="Article">
+		SELECT *
+		FROM article
+		WHERE delState != 1
+		AND id = #{id}
+	</select>
+	
+	<select id="getArticleFiles" parameterType="long" resultType="com.example.demo.dto.ArticleFile">
+		SELECT *
+		FROM articleFile
+		WHERE articleId = #{articleId}
+	</select>
+	
+	<select id="getArticleImgFiles" parameterType="long" resultType="com.example.demo.dto.ArticleFile">
+		SELECT *
+		FROM articleFile
+		WHERE articleId = #{articleId}
+		AND `type` IN ('png','gif','jpg')
+	</select>
+	
+	<select id="getOneFile" parameterType="long" resultType="com.example.demo.dto.ArticleFile">
+		SELECT *
+		FROM articleFile
+		WHERE id = #{id}
+	</select>
+	
+	<delete id="deleteFile">
+		DELETE FROM articleFile
+		WHERE id IN
+        <foreach collection="deleteFiles" item="deleteId" index="index"  open="(" close=")" separator=",">
+            #{deleteId}
+        </foreach>
+	</delete>
+	
+	<insert id="insert" parameterType="map" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO `article`
+		SET `regDate` = NOW(),		
+		`modDate` = NOW(),
+		`title` = #{title},
+		`body` = #{body},
+		`writer` = #{writer}
+	</insert>
+	
+	<insert id="insertFiles" parameterType="map">
+		INSERT INTO `articleFile`
+		SET `regDate` = NOW(),	
+		`articleId` = #{articleId},
+		`prefix` = #{prefix},
+		`originalFileName` = #{originalFileName},
+		`type` = #{type}
+	</insert>
+	
+	<update id="update" parameterType="map">
+		UPDATE `article`
+		SET `modDate` = NOW(),
+		`title` = #{title},
+		`body` = #{body},
+		`writer` = #{writer}
+		WHERE `id` = #{id} 
+		<if test="boardId != null and boardId != ''">AND boardId = #{boardId}</if> 
+	</update>
+	
+  	<update id="updateToDelMode" parameterType="map">
+		UPDATE `article`
+		SET `delState` = 1
+		WHERE `id` = #{id} 
+		<if test="boardId != null and boardId != ''">AND boardId = #{boardId}</if> 
+	</update>
+	
+	<delete id="deleteArticleFiles"  parameterType="map">
+		DELETE FROM articleFile
+		WHERE articleId = #{id}
+	</delete>
+	
+  	<resultMap id="Article" type="com.example.demo.dto.Article">
+  		<result property="id" column="id"/>
+  		<result property="regDate" column="regDate"/>
+  		<result property="modDate" column="modDate"/>
+  		<result property="title" column="title"/>
+  		<result property="body" column="body"/>
+  		<result property="boardId" column="boardId"/>
+  		<result property="writer" column="writer"/>
+  		<result property="delState" column="delState"/>
+  		<association property="extra" javaType="java.util.HashMap">
+  			<result property="onlyRegDate" column="onlyRegDate"/>
+  		</association>
+  	</resultMap> 
+</mapper>

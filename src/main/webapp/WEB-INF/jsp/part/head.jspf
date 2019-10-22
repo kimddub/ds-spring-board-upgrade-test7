@@ -1,0 +1,43 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+    pageEncoding="UTF-8"%>
+<%@ page import="java.util.*"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+<c:set var="mainTitle" value="게시판"/>
+
+<!-- List는 페이징을 위해 Page를 갖기 때문에 객체 Page의 페이지를 이용하여 기억하고 -->
+<!-- Page 객체를 갖지 않는 컨트롤러의 경우 파라미터 페이지로만 기억한다. -->
+<c:if test="${cPage == null || cPage == '' }">
+	<c:set var="cPage" value="${param.cPage}"/>
+</c:if>
+
+<c:set var="pageInfo" 
+	value="searchType=${param.searchType}&searchKey=${param.searchKey}&cPage=${cPage}"/> 
+<c:set var="searchInfo" 
+	value="searchType=${param.searchType}&searchKey=${param.searchKey}"/> 
+
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>게시글 ${pageTitle}</title>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<link rel="stylesheet"
+	href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"
+	integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU"
+	crossorigin="anonymous">
+<link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<link rel="stylesheet" href="/css/app/app.css">
+<link rel="stylesheet" href="/css/lib/lib.css">
+
+</head>
+<body>
+
+	<header>
+		<h1 class="title"><a href="./list">${mainTitle}</a></h1>
+		<h3 class="title">${pageTitle}</h3>
+	</header>

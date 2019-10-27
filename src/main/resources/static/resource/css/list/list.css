@@ -1,0 +1,154 @@
+@charset "UTF-8";
+.article-box {
+	margin-top:50px;
+}
+
+.article-menu {
+	width:90%;
+	margin:20px auto;
+}
+
+.article-menu .delete-btn {
+	background-color:#DC143C;
+}
+
+.article-menu .delete-btn:hover {
+	border:2px solid #DC143C;
+	background-color:white;
+	color:#DC143C;
+}
+
+.article-menu .listing-option select {
+	  font-family: 'Roboto';
+	  color: #777;
+	  font-weight: 300;
+	  background-color: #fff;
+	  box-shadow: 1px 2px 10px -2px rgba(0,0,0,0.3);
+	  border-radius: 3px;
+/* 	  border:none; */
+	margin:10px;
+}
+
+.article-menu .listing-option select:focus {
+	outline:none;
+}
+
+.common-table {
+	text-align:center;
+}
+
+.common-table .article-tr .article-cursor {
+	cursor:pointer;
+}
+
+.common-table .article-tr .article-cursor:hover {
+	text-decoration:underline;
+}
+
+.common-table .article-tr:hover {
+	background-color:#eff5f5;
+}
+
+#sort-btn {
+	cursor:pointer;	
+}
+
+.paging-section {
+	text-align:center;
+}
+
+.page-box {
+	display:inline-block;
+	margin:20px auto;
+}
+
+.page-box .page-index a, .page-box .current-page a {
+	display:block;
+	padding-left:7px;
+	padding-right:7px;
+	margin-left:5px;
+	margin-right:5px;
+}
+
+.page-box .page-index a:hover, .page-box .current-page a {
+	background-color:#d0e1e1;
+	border-radius:7px;
+	font-weigt:bold;
+}
+
+.page-box li {
+	
+}
+
+.page-box .page-btn {
+	background-color:#00B4CC;
+	border-radius:7px;
+	height:20x;
+	color:white;
+	margin:0 3px;
+}
+
+.page-box .page-btn a {
+	padding:0 5px;
+}
+
+.search {
+  	width: 100%;
+  	position: relative;
+  	display: flex;
+}
+
+.search-box {
+	position:absolute;
+	left:50%;
+	transform:translateX(-50%);
+	width:350px;
+}
+
+.searchSelect {
+	 height: 40px;
+	 border: 3px solid #00B4CC;
+	 border-right: none;
+	 padding: 5px;
+	 border-radius: 5px 0 0 5px;
+	 outline: none;
+}
+
+.searchSelect option {
+	border:none;	
+}
+
+.searchTerm {
+	 width: 100%;
+	 height: 40px;
+	 border: 3px solid #00B4CC;
+	 border-right: none;
+	 border-left: none;
+	 padding: 5px;
+	 outline: none;
+	 color: #9DBFAF;
+	 box-sizing:border-box;
+}
+
+.searchTerm:focus{
+  	color: #00B4CC;
+}
+
+.searchButton {
+	  width: 40px;
+	  height: 40px;
+	  border: 4px solid #00B4CC;
+	  background: #00B4CC;
+	  text-align: center;
+	  color: #fff;
+	  border-radius: 0 5px 5px 0;
+	  cursor: pointer;
+	  font-size: 20px;
+}
+
+.searchButton:hover {
+	border:4px solid #00B4CC;
+	background-color:white;
+	color:#00B4CC;
+	box-sizing:border-box;
+}

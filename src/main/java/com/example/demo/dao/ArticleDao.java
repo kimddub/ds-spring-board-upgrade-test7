@@ -8,6 +8,7 @@ import org.apache.ibatis.annotations.Param;
 
 import com.example.demo.dto.Article;
 import com.example.demo.dto.ArticleFile;
+import com.example.demo.dto.CKEditorImg;
 
 @Mapper
 public interface ArticleDao {
@@ -29,11 +30,13 @@ public interface ArticleDao {
 
 	public ArticleFile getOneFile(long id);
 
-	public List<ArticleFile> getArticleImgFiles(long articleId);
-
 	// 꼭 이해하기!!!!!!!!!!!!!!!!
 	public void deleteFile(@Param("deleteFiles") String[] deleteFiles);
 
 	public void deleteArticleFiles(Map<String, Object> param);
+
+	public CKEditorImg getCKEditorImg(long id);
+
+	public void insertCKEditorImg(CKEditorImg img);
 
 }

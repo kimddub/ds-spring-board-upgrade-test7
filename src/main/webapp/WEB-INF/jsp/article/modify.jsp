@@ -9,18 +9,36 @@
 
 <%@ include file="../part/head.jspf"%>
 
-<link rel="stylesheet" href="/css/modify/modify.css">
+<link rel="stylesheet" href="/resource/css/modify/modify.css">
 
+<script src="/resource/ckeditor_standard/ckeditor.js"></script>
 <script>
 	var maxFilecnt = 3;
 	var oldFileCnt = "${oldFileCnt}";
 	var additionalFileCnt = maxFilecnt - oldFileCnt;
-</script>
 
-<script>
+   CKEDITOR.on('dialogDefinition', function( ev ){
+       var dialogName = ev.data.name;
+       var dialogDefinition = ev.data.definition;
 
+       switch (dialogName) {
+           case 'image': //Image Properties dialog
+           //dialogDefinition.removeContents('info');
+           dialogDefinition.removeContents('Link');
+           dialogDefinition.removeContents('advanced');
+           break;
+       }
+   });
+   
+	var editorConfig = {
+	        filebrowserUploadUrl : "/article/doAddImg", //이미지만 업로드
+	   };
+
+   window.onload = function(){
+        ck = CKEDITOR.replace("editor", editorConfig);
+   };
+   
 	// --공통--
-
 	function checkForm(form) {
 	
 		var $form = form;
@@ -60,7 +78,7 @@
 	function deleteFile(id,file){
 		var id = id;
 
-		if (confirm('파일을 삭제하시겠습니까?') == false) {
+		if (confirm('기존 파일을 삭제하시겠습니까?') == false) {
 			return false;
 		}
 		
@@ -103,21 +121,23 @@
 					<tr>
 						<th>내용</th>
 						<td>
-							<textarea name="body">${article.body}</textarea>
-						</td>
-					</tr>
-					<tr>
-						<th>작성자</th>
-						<td>
-							<input type="text" name="writer" value="${article.title}">
+							<textarea name="body" id="editor" rows="10" cols="80">
+					            <c:out value="${article.body}" escapeXml="true" />
+					        </textarea>
 						</td>
 					</tr>
 					<tr class="article-file">
-						<th>첨부파일${oldFilesCnt }</th>
-						<td>
-							<div class="new-files">
-<!-- 							<input type="file" name="newFiles" /> -->
+						<th>
+							첨부파일
+							</br><span style="color:red;">*최대 100MB</span>
+						</th>
+						<td id="file-section">
+							<div id="fileDropBox" class="new-file">
+								<input type="file" id="filepond"/>
+								<div id="fileDrop">Drag & Drop your files (Word/ Excel/ PowerPoint)</div>
 							</div>
+						    <div id="fileList"></div>
+						    <div id="hiddenFileList"></div>
 							
 							<div class="old-files">
 								<c:forEach var="file" items="${articleFiles}">
@@ -132,6 +152,43 @@
 <!-- 							<input type="hidden" name ="deleteFileId" value="id"> -->
 							</div>
 						</td>
+						
+						<script>
+
+							var uploadFileCount = 0;
+							var $dragAndDrop = document.getElementById("filepond");
+
+							function cancelUpload(el,id) {
+								var $fileLine = $(el).closest('.fileLine');
+								$fileLine.remove();
+
+								var id = id;
+								$('#hiddenFileList #' + id ).remove();
+							}
+							
+							$dragAndDrop.addEventListener("change", addFiles, false);
+
+							function addFiles() {
+								var fileNum = ++uploadFileCount;
+								
+								var clone = $('#filepond').clone();
+								var uniqueId = 'file' + fileNum;
+								clone.attr('id', uniqueId)
+							    clone.attr('name', 'files')
+								$('#hiddenFileList').append(clone);
+								
+								var fileValue = clone.val().split("\\");
+								var fileName = fileValue[fileValue.length-1];
+								
+								var $fileLine = `<div class="fileLine">
+													` + fileName + `
+													<span onclick="cancelUpload(this,'` + uniqueId + `')">
+														<button type="button" class="common-spc-btn"><i class="fa fa-trash-o"></i></button><br/>
+													</span>
+												</div>`
+								$('#fileList').append($fileLine);
+							}
+						</script>
 					</tr>
 				</tbody>
 			

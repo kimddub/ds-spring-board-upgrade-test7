@@ -5,8 +5,25 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
 
 <c:set var="pageTitle" value="내용"/>
+
+
+<c:if test="${isAdminAuth == true || article.memberId == loginedMemberId}">
+	<c:set var="isAccessible" value="true"/>
+</c:if>
+
 <%@ include file="../part/head.jspf"%>
-<link rel="stylesheet" href="/css/detail/detail.css">
+<link rel="stylesheet" href="/resource/css/detail/detail.css">
+
+<script>
+	function confirmArticleDelete(id) {
+		
+		if (confirm('정말로 삭제하시겠습니까?') == false) {
+			return false;
+		}
+
+		location.href='./doDelete?id=' + id + '&${pageInfo}';
+	}
+</script>
 	
 	<section class="con common-form-box">
 		
@@ -37,7 +54,7 @@
 					<th>내용</th>
 					<td colspan="5">
 						<div class="article-body">
-							${article.bodyForPrint}
+							${article.body}
 						</div>
 						<c:forEach var="imgFile" items="${articleImgFiles}">
 							<div class="img-box">
@@ -67,8 +84,11 @@
 		<div class="common-form-menu">
 			<span class="common-form-menu-btn">
 				<input class="common-btn" type="button" value="목록" onclick="location.href='./list?${pageInfo}';">
-				<input class="common-btn" type="button" value="수정" onclick="location.href='./modify?id=${article.id}&${pageInfo}';">
-				<input class="common-btn" type="button" value="삭제" onclick="location.href='./doDelete?id=${article.id}&${pageInfo}';">
+				
+				<c:if test="${isAccessible}">
+					<input class="common-btn" type="button" value="수정" onclick="location.href='./modify?id=${article.id}&${pageInfo}';">
+					<input class="common-btn" type="button" value="삭제" onclick="confirmArticleDelete(${article.id});">
+				</c:if>
 			</span>
 		</div>
 	

@@ -17,11 +17,10 @@
 
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 <script>
-
 	var msg = "${alertMsg}";
-	var redirectUrl = "${redirectUrl}"  + "&" + "searchType=${param.searchType}&searchKey=${param.searchKey}";
+	var redirectUrl = "${redirectUrl}";  //+ "&" + "searchType=${param.searchType}&searchKey=${param.searchKey}";
 	var historyBack = "${historyBack}";
-
+	
 	if (msg.trim().length != 0) {
 		alert(msg);
 	}
@@ -31,9 +30,7 @@
 	}
 
 	if (redirectUrl.length) {
-		if (${param.cPage} != null && ${param.cPage} != '') {
-			redirectUrl += "&cPage=" + "${param.cPage}";
-		}
+
 		location.replace(redirectUrl);
 	}
 

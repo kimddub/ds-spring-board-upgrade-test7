@@ -6,10 +6,12 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,14 +24,18 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.example.demo.Page;
 import com.example.demo.PageMaker;
 import com.example.demo.dto.Article;
 import com.example.demo.dto.ArticleFile;
+import com.example.demo.dto.CKEditorImg;
+import com.example.demo.dto.FileUploadVO;
 import com.example.demo.service.ArticleService;
 
 import groovy.util.logging.Slf4j;
@@ -43,6 +49,8 @@ public class ArticleController {
 	ResourceLoader resourceLoader;
 	@Value("${custom.uploadDir}")
 	private String filePath;
+	@Value("${custom.acceptedMultipart}")
+	private String acceptedMutiFile;
 	
 	// =====기능=====
 	public List<Article> getList(Map<String, Object> param) {
@@ -53,7 +61,7 @@ public class ArticleController {
 		return articleService.getOne(id);
 	}	
 	
-	public boolean isNotAccessArticle(int id) {
+	private boolean isNotAccessibleArticle(int id) {
 		Article article = getOne(id);
 		
 		if (article == null || article.getDelState() == 1) {
@@ -61,6 +69,28 @@ public class ArticleController {
 		} 
 		
 		return false;
+	}
+	
+	private boolean isAuthMember(int id, HttpServletRequest request) {
+		Article article = getOne(id);
+		
+		if (article == null || article.getDelState() == 1) {
+			return false;
+		} 
+		
+		boolean isAdminAuth = (boolean)request.getAttribute("isAdminAuth");
+		
+		if (!isAdminAuth) {
+			return false;
+		}
+		
+		int isLoginedMemberId = (int)request.getAttribute("isLoginedMemberId");
+		
+		if (article.getMemberId() != isLoginedMemberId) {
+			return false;
+		}
+		
+		return true;
 	}
 	
 	public String getArticleAccessMsg(int id) {
@@ -85,43 +115,82 @@ public class ArticleController {
 	
 	@RequestMapping("article/list")
 	public String showList(Page page, Model model,@RequestParam Map<String,Object> param, HttpServletRequest request) {
-						
-		// 세상에 cPage라는 변수로 들어오는 값이
-		// page 객체 안의 cPage 필드에도 반영된다
-		// 그래서 0이 셋팅과정 없이 입력되는 것 방지
-		if (page.getcPage() < 1) {
-			page.setcPage(1);
-		}
-		
+				
 		// 나중엔 URL에 계속 들어있으므로 문장이 "" 인지 비교
 		if (param.containsKey("searchType") && param.containsKey("searchKey")) {
 			param.put("searchMode", "true");
 		}
+			
+		if (param.containsKey("listSize")) { 
+			
+			if ( param.get("listSize").equals("20")) {
+				page.setPerPageArticles(20);
+				
+			} else if ( param.get("listSize").equals("10")) {
+				page.setPerPageArticles(10);
+			}
+		} 
+		
+		if (page.getcPage() < 1) {
+			page.setcPage(1);
+		}
 		
 		PageMaker pageMaker = new PageMaker(page, articleService.getTotalCount(param));
-		model.addAttribute("pageMaker", pageMaker);
-		model.addAttribute("cPage", page.getcPage());
+
+		
+		if (page.getcPage() > pageMaker.getLimitPage()) {
+			page.setcPage(pageMaker.getLimitPage());
+			pageMaker = new PageMaker(page, articleService.getTotalCount(param));
+		}
+		
+		System.out.println("getStartPage: ");
+		System.out.println(pageMaker.getStartPage());
+		System.out.println("getEndPage: ");
+		System.out.println(pageMaker.getEndPage());
 		
 		param.put("prevPageArticles", (long)page.getPrevPageArticles());
 		param.put("perPageArticles", (long)page.getPerPageArticles());
 		
+		if (param.containsKey("sort") && param.get("sort").equals("ASC")) { 
+			
+			param.put("regDateSort", "ASC");
+		} else {
+
+			param.put("regDateSort", "DESC");
+		}
+		
 		List<Article> articles = getList(param);
 		model.addAttribute("articles", articles);
+		model.addAttribute("pageMaker", pageMaker);
+		model.addAttribute("cPage", page.getcPage());
 		
 		return "article/list";
 	}	
 		
 	@RequestMapping("article/add")
-	public String showAdd() {
+	public String showAdd(Model model) {
+		model.addAttribute("acceptedMutiFile", acceptedMutiFile);
+		
 		return "article/add";
+	}
+	
+	@RequestMapping("article/doAddImg")
+	@ResponseBody
+	public Map<String,Object> doAddImg(@RequestParam MultipartFile upload) throws Exception{
+		
+		// 게시물 번호 어떻게 참조?
+		
+        Map<String,Object> rs = articleService.addCKeditorImg(upload);
+          
+		return rs;
 	}
 	
 	@RequestMapping("article/doAdd")
 	public String doAdd(@RequestParam Map<String,Object> param, 
 			@RequestParam(value="files") List<MultipartFile> files,
-			Model model) {
+			Model model, HttpServletRequest request) {
 		
-		Map<String,Object> rs = articleService.add(param);
+		Map<String,Object> rs = articleService.add(param, request);
 		articleService.addFiles(files, param.get("id"));
 		
 		String resultCode = (String) rs.get("resultCode");
@@ -146,7 +215,7 @@ public class ArticleController {
 		int id = Integer.parseInt(strId);
 		
 		// 접근 불가능한 게시물의 메시지 타입 읽어옴
-		if (isNotAccessArticle(id)) {
+		if (isNotAccessibleArticle(id)) {
 			
 			model.addAttribute("alertMsg", getArticleAccessMsg(id));
 			model.addAttribute("historyBack", "true");
@@ -157,11 +226,9 @@ public class ArticleController {
 	
 		Article article = getOne(id);
 		List<ArticleFile> articleFiles = articleService.getArticleFiles(id);
-		List<ArticleFile> articleImgFiles = articleService.getArticleImgFiles(id);
 				
 		model.addAttribute("article", article);
 		model.addAttribute("articleFiles", articleFiles);
-		model.addAttribute("articleImgFiles", articleImgFiles);
 		
 		return "article/detail";
 	}
@@ -172,6 +239,32 @@ public class ArticleController {
 		ArticleFile articleFile = articleService.getOneFile(id);
 		
 		File target = new File(filePath, articleFile.getPrefix()+articleFile.getOriginalFileName());		
+		Resource resource = null;
+		String mimeType = null;	
+		HttpHeaders header = new HttpHeaders();
+
+		if(target.exists()) {
+			
+			resource = new UrlResource(target.toURI());
+			mimeType = Files.probeContentType(Paths.get(resource.getFilename()));
+			
+			if(mimeType == null) {
+				mimeType = "application/octet-stream";
+			}		
+			
+			header.setContentType(MediaType.parseMediaType(mimeType));
+		}
+		
+		
+		// resource, multiValueMap, httpStatus
+		return new ResponseEntity<Resource>(resource, header, HttpStatus.OK);
+	}
+	
+	@RequestMapping("article/showCKEditorImg")
+	public ResponseEntity<Resource> showCKEditorImg(long id, HttpServletRequest request) throws IOException{
+		CKEditorImg imgFile = articleService.getCKEditorImg(id);
+		
+		File target = new File(filePath + "/ckeditor", imgFile.getPrefix()+imgFile.getOriginalFileName());	
 		Resource resource = null;
 		String mimeType = null;	
 		HttpHeaders header = new HttpHeaders();
@@ -234,7 +327,7 @@ public class ArticleController {
 		int id = Integer.parseInt(strId);
 		
 		// 접근 불가능한 게시물의 메시지 타입 읽어옴
-		if (isNotAccessArticle(id)) {
+		if (isNotAccessibleArticle(id)) {
 			
 			model.addAttribute("alertMsg", getArticleAccessMsg(id));
 			model.addAttribute("historyBack", "true");
@@ -261,7 +354,7 @@ public class ArticleController {
 		int id = Integer.parseInt(strId);
 		
 		// 접근 불가능한 게시물의 메시지 타입 읽어옴
-		if (isNotAccessArticle(id)) {
+		if (isNotAccessibleArticle(id)) {
 			
 			model.addAttribute("alertMsg", getArticleAccessMsg(id));
 			model.addAttribute("historyBack", "true");
@@ -282,8 +375,15 @@ public class ArticleController {
 		}
 		
 		String resultCode = (String) rs.get("resultCode");
-		String redirectUrl = "/article/detail?id=" + id; // 나머진 jsp에 파라미터 유지된 채로 받을 수 있다.
-				
+		String redirectUrl = "/article/detail?id=" + id;
+		
+		try {
+			redirectUrl += "&" + URLDecoder.decode(request.getQueryString(), "UTF-8");
+			
+		} catch (UnsupportedEncodingException e) {
+			e.printStackTrace();
+		}
+		
 		if (resultCode.startsWith("S-")) {
 
 			model.addAttribute("alertMsg", rs.get("alertMsg"));
@@ -307,17 +407,20 @@ public class ArticleController {
 	
 	@RequestMapping("article/doDelete")
 	public String doDelete(@RequestParam Map<String,Object> param, Model model, HttpServletRequest request) {
+		
 		String strId = (String)param.get("id");
 		int id = Integer.parseInt(strId);
 		
 		// 접근 불가능한 게시물의 메시지 타입 읽어옴
-		if (isNotAccessArticle(id)) {
+		if (isNotAccessibleArticle(id)) {
 			
 			model.addAttribute("alertMsg", getArticleAccessMsg(id));
 			model.addAttribute("historyBack", "true");
 			
 			return "common/redirect";
 		}
+		
+		
 		
 		Map<String,Object> rs = articleService.delete(param);
 		
@@ -327,6 +430,7 @@ public class ArticleController {
 		
 		try {
 			redirectUrl += "&" + URLDecoder.decode(request.getQueryString(), "UTF-8");
+			
 		} catch (UnsupportedEncodingException e) {
 			e.printStackTrace();
 		}

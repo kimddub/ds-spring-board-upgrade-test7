@@ -1,9 +1,12 @@
 <%@ page language="java" contentType="text/html; charset=UTF-8"
     pageEncoding="UTF-8"%>
 <%@ page import="java.util.*"%>
+<%@ page import="com.example.demo.dto.Member"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c"%>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/functions" prefix="fn"%>
+
 <c:set var="mainTitle" value="게시판"/>
+
 
 <!-- List는 페이징을 위해 Page를 갖기 때문에 객체 Page의 페이지를 이용하여 기억하고 -->
 <!-- Page 객체를 갖지 않는 컨트롤러의 경우 파라미터 페이지로만 기억한다. -->
@@ -11,18 +14,21 @@
 	<c:set var="cPage" value="${param.cPage}"/>
 </c:if>
 
+<c:if test="${cPage == null || cPage == '' }">
+	<c:set var="cPage" value="${param.cPage}"/>
+</c:if>
+
 <c:set var="pageInfo" 
-	value="searchType=${param.searchType}&searchKey=${param.searchKey}&cPage=${cPage}"/> 
+	value="searchType=${param.searchType}&searchKey=${param.searchKey}&cPage=${cPage}&listSize=${param.listSize}"/> 
 <c:set var="searchInfo" 
-	value="searchType=${param.searchType}&searchKey=${param.searchKey}"/> 
+	value="searchType=${param.searchType}&searchKey=${param.searchKey}&listSize=${param.listSize}"/> 
 
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>게시글 ${pageTitle}</title>
+<title>${mainTitle} ${pageTitle}</title>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 
 <link rel="stylesheet"
 	href="https://use.fontawesome.com/releases/v5.3.1/css/all.css"
@@ -31,13 +37,92 @@
 <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
 
-<link rel="stylesheet" href="/css/app/app.css">
-<link rel="stylesheet" href="/css/lib/lib.css">
+<link rel="stylesheet" href="/resource/css/app/app.css">
+<link rel="stylesheet" href="/resource/css/lib/lib.css">
+<link rel="stylesheet" href="/resource/css/head/head.css">
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script type="text/javascript" src="/resource/js/jquery/jquery.splendid.textchange.js"></script>
+<script type="text/javascript" src="/resource/js/lib/lib.js"></script>
 
 </head>
 <body>
+	
+	<div class="DS_header"> 
+		<div class="DS_bar">
+			<nav class="con relative"">
+				<div class="main-logo" onclick="location.href='../home/main';">
+					<img alt="logo" src="/resource/image/logo2.png">
+				</div>
+				
+				<nav class="member-menu absolute-middle">
+		
+					<!-- 로그인시 메뉴 -->
+					<c:if test="${isLogined == true}">
+						
+						<ul class="row">
+							<li class="cell logined-member-info">
+								<span>${loginedMember.name}</span> 
+								<c:if test="${isAdminAuth == true}">관리자</c:if><span>님</span>
+							</li>
+						
+							<li class="cell">
+								<a href='../member/doLogout'>로그아웃</a>
+							</li>
+						</ul>
+					</c:if>
+					
+					<!-- 미 로그인시 메뉴 -->
+					<c:if test="${isLogined == false}"> 						
+						<ul class="row">
+							<li class="cell">
+								<a href='../member/login'>로그인</a>
+							</li>
+							<li class="cell">
+								<a href='../member/join'>회원가입</a>	
+							</li>
+						</ul>
+					</c:if>
+				
+				</nav>
+			</nav>
+		</div>
+		
+		<div class="side-menu relative">
+			<nav class="con row " style="margin:0 auto;">
+				<ul class="cell">
+					<li><a href="../home/crawlingData" style="font-size:20px; ">뉴스 수집 조회</a></li>
+					<li><a href="../home/analyzedData" style="font-size:20px;">이슈 키워드 조회</a></li>
+				</ul>
+				
+				<ul class="search-menu cell absolute-middle">
+				
+					<form id="search-form-1" action="../article/search" method="POST">
+						<li>
+							<div class="search-bar" style="padding: 0 0 0 20px;">
+							  <input type="text" name="q" class="input" placeholder="키워드를 검색하세요" >
+							  	<div class="search-btn" onclick="doSearch1();">
+						       		<svg class="icon icon-18">
+						        		<use xlink:href="#magnify"></use>
+						    		</svg>
+						    	</div>
+							</div>
+						<li>
+					</form>
+				</ul>
+			</nav>
+		</div>
+	</div>
+	
+	<div class="DS_term"> 
+	</div>
 
-	<header>
-		<h1 class="title"><a href="./list">${mainTitle}</a></h1>
-		<h3 class="title">${pageTitle}</h3>
-	</header>
+
+	<section class="con DS_main">		
+		
+		<header>
+			<h1 class="title"><a href="../article/list">${mainTitle}</a></h1>
+			<h3 class="title">${pageTitle}</h3>
+		</header>

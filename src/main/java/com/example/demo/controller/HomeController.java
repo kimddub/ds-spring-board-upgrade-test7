@@ -15,8 +15,13 @@ public class HomeController {
 		return "home/main";
 	}
 	
-	@RequestMapping("home/main")
+	@RequestMapping("home")
 	public String showMain2() {
+		return "home/main";
+	}
+	
+	@RequestMapping("home/main")
+	public String showMain3() {
 		return "home/main";
 	}
 	

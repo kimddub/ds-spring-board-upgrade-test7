@@ -1,0 +1,47 @@
+@charset "UTF-8";
+
+.DS_bar > nav {
+	
+}
+
+.main-logo	{
+	display:inline-block;
+	box-sizing:border-box;
+	padding:5px;
+	height:70px;
+	cursor:pointer;
+	margin:0 auto;
+	display:inline-block;
+}
+
+.main-logo > img {
+	height:60px;
+}
+
+.member-menu {
+	right:0;
+}
+
+.member-menu ul {
+	
+}
+
+.member-menu ul > li {
+	
+}
+
+.member-menu ul > li > a {
+	padding:10px;
+	font-weight:bold;
+	font-size:15px;
+}
+
+.member-menu ul > li:hover a {
+	color:white;
+}
+
+.member-menu .logined-member-info {
+	color:white;
+	font-weight:normal;
+	fint-size:15px;
+}

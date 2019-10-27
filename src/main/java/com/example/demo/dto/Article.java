@@ -18,6 +18,7 @@ public class Article {
 	private String title;
 	private String body;
 	private int boardId;
+	private int memberId;
 	private String writer;
 	private int delState;
 	private Map<String, Object> extra;

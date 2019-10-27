@@ -8,7 +8,12 @@
 <mapper namespace="com.example.demo.dao.ArticleDao">
 
 	<select id="getList" resultMap="Article">
-		SELECT a1.*, a2.onlyRegDate
+		SELECT a1.*, a2.onlyRegDate,
+			IFNULL((SELECT f.`count`
+					FROM (SELECT articleId, COUNT(*) AS `count`
+							FROM articleFile
+							GROUP BY articleId) AS f 
+					WHERE a1.id = f.articleId),0) AS fileCount
 		FROM article AS a1
 		LEFT JOIN (
 			SELECT id, DATE_FORMAT(regDate,"%Y-%m-%d") AS 'onlyRegDate'
@@ -17,11 +22,28 @@
 		ON a1.id = a2.id
 		WHERE a1.delState != 1
 		<if test="searchMode != null and searchMode == 'true'">
+			<if test="searchType == 'all'"> 
+				AND (a1.`title` LIKE CONCAT('%', #{searchKey}, '%') 
+					OR a1.`body` LIKE CONCAT('%', #{searchKey}, '%') 
+					OR a1.`writer` LIKE CONCAT('%', #{searchKey}, '%'))
+			</if>
 			<if test="searchType == 'title'"> AND a1.`title` LIKE CONCAT('%', #{searchKey}, '%') </if>
-			<if test="searchType == 'body'"> AND a1.`body` LIKE CONCAT('%', #{searchKey}, '%') </if>
+			<if test="searchType == 'titleBody'"> 
+				AND (a1.`title` LIKE CONCAT('%', #{searchKey}, '%') 
+					OR a1.`body` LIKE CONCAT('%', #{searchKey}, '%'))
+			</if>
 			<if test="searchType == 'writer'"> AND a1.`writer` LIKE CONCAT('%', #{searchKey}, '%') </if>
 		</if>
-		ORDER BY a1.`regDate` DESC, a1.id DESC
+		ORDER BY 
+		<choose>
+			<when test="regDateSort == 'ASC'">
+				a1.`regDate` ASC
+			</when>
+			<otherwise>
+				a1.`regDate` DESC
+			</otherwise>
+		</choose>
+		, a1.id DESC
 		LIMIT #{prevPageArticles}, #{perPageArticles}
 	</select>
 	
@@ -30,9 +52,18 @@
 		FROM article
 		WHERE delState != 1
 		<if test="searchMode != null and searchMode == 'true'">
+			<if test="searchType == 'all'"> 
+				AND (`title` LIKE CONCAT('%', #{searchKey}, '%') 
+					OR `body` LIKE CONCAT('%', #{searchKey}, '%') 
+					OR `writer` LIKE CONCAT('%', #{searchKey}, '%'))
+			</if>
 			<if test="searchType == 'title'"> AND `title` LIKE CONCAT('%', #{searchKey}, '%') </if>
+			<if test="searchType == 'titleBody'"> 
+				AND (`title` LIKE CONCAT('%', #{searchKey}, '%') 
+					OR `body` LIKE CONCAT('%', #{searchKey}, '%'))
+			</if>
+			<if test="searchType == 'writer'"> AND `writer` LIKE CONCAT('%', #{searchKey}, '%') </if>
 		</if>
-		ORDER BY `regDate` DESC, id DESC;
 	</select>
 	
 	<select id="getOne" parameterType="long" resultMap="Article">
@@ -48,11 +79,10 @@
 		WHERE articleId = #{articleId}
 	</select>
 	
-	<select id="getArticleImgFiles" parameterType="long" resultType="com.example.demo.dto.ArticleFile">
+	<select id="getCKEditorImg" parameterType="long" resultType="com.example.demo.dto.CKEditorImg">
 		SELECT *
-		FROM articleFile
-		WHERE articleId = #{articleId}
-		AND `type` IN ('png','gif','jpg')
+		FROM CKEditorImg
+		WHERE id = #{id}
 	</select>
 	
 	<select id="getOneFile" parameterType="long" resultType="com.example.demo.dto.ArticleFile">
@@ -75,7 +105,9 @@
 		`modDate` = NOW(),
 		`title` = #{title},
 		`body` = #{body},
-		`writer` = #{writer}
+		`memberId` = #{memberId},
+		`writer` = #{writer},
+		boardId = 1
 	</insert>
 	
 	<insert id="insertFiles" parameterType="map">
@@ -87,12 +119,19 @@
 		`type` = #{type}
 	</insert>
 	
+	<insert id="insertCKEditorImg" parameterType="map" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO `CKEditorImg`
+		SET `regDate` = NOW(),	
+		`prefix` = #{prefix},
+		`originalFileName` = #{originalFileName},
+		`type` = #{type}
+	</insert>
+	
 	<update id="update" parameterType="map">
 		UPDATE `article`
 		SET `modDate` = NOW(),
 		`title` = #{title},
-		`body` = #{body},
-		`writer` = #{writer}
+		`body` = #{body}
 		WHERE `id` = #{id} 
 		<if test="boardId != null and boardId != ''">AND boardId = #{boardId}</if> 
 	</update>
@@ -116,10 +155,12 @@
   		<result property="title" column="title"/>
   		<result property="body" column="body"/>
   		<result property="boardId" column="boardId"/>
+  		<result property="memberId" column="memberId"/>
   		<result property="writer" column="writer"/>
   		<result property="delState" column="delState"/>
   		<association property="extra" javaType="java.util.HashMap">
   			<result property="onlyRegDate" column="onlyRegDate"/>
+  			<result property="fileCount" column="fileCount"/>
   		</association>
   	</resultMap> 
 </mapper>

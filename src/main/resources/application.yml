@@ -1,7 +1,8 @@
 custom:
-  uploadDir: C:\work\ksb\sts4-workspace\ds-spring-board-test2\src\main\resources\savedArticleFile
+  uploadDir: C:\work\ksb\sts4-workspace\ds-spring-board-upgrade-test7\src\main\resources\savedArticleFile
+  acceptedMultipart: doc,docx,xls,xlsx,ppt,pptx
 server:
-  port: 8010
+  port: 8017
 spring:
   servlet:
     multipart:
@@ -13,7 +14,7 @@ spring:
       suffix: .jsp
   datasource:
     driverClassName: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
-    url: jdbc:log4jdbc:mariadb://localhost:3306/ds?autoReconnect=true&useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
+    url: jdbc:log4jdbc:mariadb://localhost:3306/ds7?autoReconnect=true&useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
     #driverClassName: org.mariadb.jdbc.Driver
     #driver-class-name: com.mysql.cj.jdbc.Driver
     #url: jdbc:log4jdbc:mysql://127.0.0.1:3306/ds?autoReconnect=true&useUnicode=true&characterEncoding=utf8&serverTimezone=UTC

@@ -1,0 +1,14 @@
+@charset "UTF-8";
+
+.common-table .article-body{
+	min-height:300px;
+}
+
+.common-table td {
+	text-align:left;
+}
+
+.download-file:hover {
+	cursor:pointer;
+	text-decoration: underline;
+}
